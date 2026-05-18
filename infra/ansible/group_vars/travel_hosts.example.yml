@@ -1,0 +1,13 @@
+project_root: /opt/travel-plan
+compose_file: infra/docker/docker-compose.yml
+env_file: .env
+
+docker_users:
+  - ubuntu
+
+required_packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - python3-pip
+  - rsync

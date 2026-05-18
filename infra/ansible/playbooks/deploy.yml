@@ -1,0 +1,52 @@
+---
+- name: Deploy Travel Management stack
+  hosts: travel_hosts
+  become: true
+  gather_facts: false
+
+  vars:
+    local_project_path: "{{ playbook_dir }}/../../.."
+
+  tasks:
+    - name: Synchronize project files
+      ansible.posix.synchronize:
+        src: "{{ local_project_path }}/"
+        dest: "{{ project_root }}/"
+        delete: true
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=target"
+          - "--exclude=**/target"
+          - "--exclude=.env"
+          - "--exclude=docker-data"
+
+    - name: Ensure environment file exists
+      ansible.builtin.copy:
+        src: "{{ project_root }}/.env.example"
+        dest: "{{ project_root }}/{{ env_file }}"
+        remote_src: true
+        force: false
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0600"
+
+    - name: Pull base images
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_root }}"
+        files:
+          - "{{ compose_file }}"
+        env_files:
+          - "{{ env_file }}"
+        pull: always
+        state: present
+
+    - name: Start stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_root }}"
+        files:
+          - "{{ compose_file }}"
+        env_files:
+          - "{{ env_file }}"
+        build: always
+        remove_orphans: true
+        state: present
