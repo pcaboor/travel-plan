@@ -36,7 +36,7 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 | 3 | **CRUD admin/travel + bookings read + tests** | ✅ Phase 3 terminée |
 | 4 | **Admin Dashboard (responsive React/TS)** | ✅ Phase 4 terminée |
 | 5 | **TLS gateway sur le dashboard nginx** | ✅ Phase 5 terminée |
-| 6 | Intégrations Stripe + PayPal | ⏸ |
+| 6 | **Intégrations Stripe + PayPal (sandbox réel)** | ✅ Phase 6 terminée |
 | 7 | Vault + logging centralisé | ⏸ |
 | 8 | Bonus K8s + E2E | ⏸ |
 
@@ -95,6 +95,16 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 - Override en prod : monter un vrai cert dans le dossier pointé par `TLS_CERT_DIR` (`.env`), qui se retrouve dans `/etc/nginx/certs/external` du container. Path Let's Encrypt déféré à un ingress externe (Traefik / cert-manager K8s en phase 8)
 - `CORS_ALLOWED_ORIGINS` étendu pour inclure `https://localhost:5443`
 - Services backend restent en HTTP sur le réseau interne `travel-internal` (`internal: true`). Pas de mTLS interne en phase 5 — c'est isolé Docker pour l'instant
+
+### Paiements Stripe + PayPal (phase 6)
+- `payment-service` câblé sur la même Postgres que `admin-service` mais sur un schéma dédié `payment` (`spring.flyway.schemas=payment`, `hibernate.default_schema=payment`). Évite le conflit de `flyway_schema_history` entre les deux services
+- Table `payment.payment_transactions` avec contrainte unique sur `(provider, provider_intent_id)` et CHECK sur status (`PENDING/REQUIRES_ACTION/PROCESSING/SUCCEEDED/FAILED/CANCELLED/REFUNDED`)
+- **Stripe** : SDK officiel `com.stripe:stripe-java`. `StripeAdapter` crée des `PaymentIntent` avec `automatic_payment_methods`, gère retrieve/cancel, et vérifie les webhooks via `Webhook.constructEvent` (requiert `STRIPE_WEBHOOK_SECRET`)
+- **PayPal** : pas de SDK officiel maintenu, donc client REST via Spring `RestClient` directement (Orders API v2). Cache le token OAuth `client_credentials` jusqu'à expiration. Vérifie les webhooks via `POST /v1/notifications/verify-webhook-signature` (requiert `PAYPAL_WEBHOOK_ID`)
+- Endpoints : `POST /api/payments/intents` (USER+), `GET /:id`, `POST /:id/refresh` (sync depuis le provider), `POST /:id/cancel` (MANAGER+). `subject` du JWT = `userId` propriétaire de la transaction
+- Webhooks publics (whitelist Security) : `/api/payments/webhooks/stripe` et `/paypal`. Signature obligatoire — un webhook invalide reçoit 502 (Stripe) ou 400 (PayPal)
+- Si un provider est désactivé (`STRIPE_ENABLED=false` ou clés absentes), `ProviderException.disabled` → réponse 503 avec `error: provider_disabled`
+- Tests : 11 tests payment-service (MockMvc + adapters mockés via `@MockBean`, pas d'appel réseau réel). Pour tester en vrai en local, fournir des clés Stripe test et utiliser `stripe listen --forward-to https://localhost:5443/api/payments/webhooks/stripe`
 
 ## Conventions
 
