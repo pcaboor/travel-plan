@@ -142,6 +142,30 @@ class PaymentControllerIntegrationTest {
     }
 
     @Test
+    void capture_paypal_intent_marks_succeeded() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(paypalAdapter.createIntent(any(), any(), any(), any()))
+                .thenReturn(ProviderIntent.ofPaypal("ORDER-CAP", PaymentStatus.PENDING,
+                        "https://paypal.com/approve"));
+        var result = mockMvc.perform(post("/api/payments/intents")
+                        .header("Authorization", jwt().bearer(userId, "u@example.com", List.of("USER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateIntentRequest(
+                                PaymentProvider.PAYPAL, new BigDecimal("9.00"), "EUR", null))))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String id = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+
+        when(paypalAdapter.capture("ORDER-CAP"))
+                .thenReturn(ProviderIntent.ofPaypal("ORDER-CAP", PaymentStatus.SUCCEEDED, null));
+
+        mockMvc.perform(post("/api/payments/intents/{id}/capture", id)
+                        .header("Authorization", jwt().bearer(userId, "u@example.com", List.of("USER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCEEDED"));
+    }
+
+    @Test
     void validation_rejects_short_currency() throws Exception {
         mockMvc.perform(post("/api/payments/intents")
                         .header("Authorization", jwt().bearer(UUID.randomUUID(), "u@example.com", List.of("USER")))

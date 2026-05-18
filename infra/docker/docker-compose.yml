@@ -163,6 +163,7 @@ services:
       retries: 10
     networks:
       - travel-internal
+      - travel-edge
 
   sonarqube-db:
     image: postgres:16-alpine

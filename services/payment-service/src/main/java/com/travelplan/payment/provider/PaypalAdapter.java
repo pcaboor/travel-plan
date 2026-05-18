@@ -92,6 +92,22 @@ public class PaypalAdapter {
         }
     }
 
+    public ProviderIntent capture(String orderId) {
+        ensureEnabled();
+        try {
+            JsonNode response = client.post()
+                    .uri("/v2/checkout/orders/{id}/capture", orderId)
+                    .headers(h -> h.setBearerAuth(accessToken()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of())
+                    .retrieve()
+                    .body(JsonNode.class);
+            return toProviderIntent(response);
+        } catch (HttpClientErrorException e) {
+            throw new ProviderException("PayPal captureOrder failed: " + e.getResponseBodyAsString(), false, e);
+        }
+    }
+
     public boolean verifyWebhook(String body, HttpHeaders headers) {
         if (properties.webhookId() == null || properties.webhookId().isBlank()) {
             throw new ProviderException("PAYPAL_WEBHOOK_ID is not configured");

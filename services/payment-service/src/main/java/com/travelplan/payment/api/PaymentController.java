@@ -54,6 +54,12 @@ public class PaymentController {
         return service.refresh(id);
     }
 
+    @PostMapping("/{id}/capture")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
+    public IntentResponse capture(@PathVariable UUID id) {
+        return service.capture(id);
+    }
+
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public IntentResponse cancel(@PathVariable UUID id) {

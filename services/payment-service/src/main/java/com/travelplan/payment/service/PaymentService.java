@@ -69,6 +69,17 @@ public class PaymentService {
         return IntentResponse.from(tx, providerIntent.clientSecret(), providerIntent.approvalUrl());
     }
 
+    public IntentResponse capture(UUID id) {
+        PaymentTransaction tx = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Payment intent not found: " + id));
+        ProviderIntent providerIntent = switch (tx.getProvider()) {
+            case PAYPAL -> paypal.capture(tx.getProviderIntentId());
+            case STRIPE -> stripe.retrieve(tx.getProviderIntentId());
+        };
+        tx.setStatus(providerIntent.status());
+        return IntentResponse.from(tx, providerIntent.clientSecret(), providerIntent.approvalUrl());
+    }
+
     public IntentResponse cancel(UUID id) {
         PaymentTransaction tx = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Payment intent not found: " + id));
