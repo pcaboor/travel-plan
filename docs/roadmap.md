@@ -34,7 +34,7 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 | 1 | **Schéma BDD + entités JPA + migrations Flyway + Neo4j** | ✅ Phase 1 terminée |
 | 2 | **Auth-service JWT + RBAC** | ✅ Phase 2 terminée |
 | 3 | **CRUD admin/travel + bookings read + tests** | ✅ Phase 3 terminée |
-| 4 | Admin Dashboard (responsive, Chrome/Firefox) | ⏸ |
+| 4 | **Admin Dashboard (responsive React/TS)** | ✅ Phase 4 terminée |
 | 5 | Gateway + reverse proxy TLS | ⏸ |
 | 6 | Intégrations Stripe + PayPal | ⏸ |
 | 7 | Vault + logging centralisé | ⏸ |
@@ -78,6 +78,16 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 - `travel-service` : CRUD `travels` avec sous-ressources `destinations`/`activities`/`accommodations`/`transportations` portées par les inputs du DTO (le service crée et attache en cascade). ADMIN+MANAGER write, USER+ read
 - Cross-store sync : `POST /api/admin/bookings/cancel-by-travel/:travelRefId` permet à `travel-service` (ou un orchestrateur) de notifier `admin-service` lorsqu'un voyage est supprimé. Pas de webhook automatique en phase 3 — c'est un endpoint pull
 - Maven compiler doit avoir `<parameters>true</parameters>` pour que Spring résolve les `@PathVariable` par nom (sinon `Name for argument ... not specified`)
+
+### Admin Dashboard (phase 4)
+- Stack : React 18 + TypeScript strict + Vite 6 + Tailwind 3 + Radix UI primitives + lucide icons. State serveur géré par TanStack Query. Forms par react-hook-form + zod
+- Layout responsive (sidebar collapsible mobile, topbar avec logout). Routing react-router-dom. Sessions stockées en `sessionStorage` (le JWT disparaît à la fermeture de l'onglet)
+- Fetch wrapper maison (`src/lib/api.ts`) qui injecte le Bearer, gère 401 (clear token) et parse l'erreur structurée backend (status, code, message, fields)
+- Cross-store delete : quand l'admin supprime un travel via l'UI, le frontend appelle aussi `POST /api/admin/bookings/cancel-by-travel/:id` pour cancel les bookings associés (action côté frontend en attendant un orchestrateur server-to-server)
+- CORS configuré sur les 3 services Spring (`travelplan.cors.allowed-origins`, défaut `http://localhost:5173`)
+- En dev, Vite proxy `/api/auth`, `/api/admin`, `/api/travels` vers les services backends. En prod, nginx (du Dockerfile frontend) sert le bundle et reverse-proxy les `/api/*`
+- Docker compose : `admin-dashboard` exposé sur `http://localhost:5173`, attaché à `travel-edge` (public) + `travel-internal` (pour DNS des services). Backend services restent sur `travel-internal` (internal: true) — pas de port publié
+- Tests UI navigateur **non automatisés** dans cette phase. Build prod et type-check stricts validés (`npm run build`). E2E reporté en phase 8
 
 ## Conventions
 

@@ -26,6 +26,7 @@ This repository starts with the infrastructure and backend foundations required 
 
 ```text
 services/   Spring Boot microservices
+frontend/   React + Vite admin dashboard
 infra/      Docker, Jenkins, SonarQube, and Ansible assets
 docs/       Architecture, security, and operational documentation
 ```
@@ -68,8 +69,37 @@ docker run --rm -v "$PWD:/workspace" -w /workspace maven:3.9.9-eclipse-temurin-2
 - Docker Desktop
 - Java 21
 - Maven 3.9+
+- Node 20+ and npm (for the frontend)
 
 If Maven is not installed locally, the Jenkins pipeline and Docker-based build commands can still run in a Maven container.
+
+## Frontend (Admin Dashboard)
+
+Local development:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+By default the dev server listens on `http://localhost:5173` and proxies
+`/api/auth`, `/api/admin` and `/api/travels` to the backend services
+(`localhost:8081/8082/8083`). Override those targets with `VITE_AUTH_URL`,
+`VITE_ADMIN_URL`, `VITE_TRAVEL_URL`.
+
+Production build:
+
+```bash
+cd frontend
+npm run build
+```
+
+When running the full stack via `docker compose`, the dashboard is built into an
+`nginx` image and exposed at `http://localhost:5173`.
+
+Default admin credentials are seeded by `auth-service` on first boot — see
+`ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` in `.env.example`.
 
 ## Documentation
 

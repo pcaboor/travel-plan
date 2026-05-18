@@ -56,7 +56,7 @@ public class Booking extends AuditableEntity {
 
     @NotNull
     @Size(min = 3, max = 3)
-    @Column(name = "currency", nullable = false, length = 3, columnDefinition = "char(3)")
+    @Column(name = "currency", nullable = false, length = 3)
     private String currency = "EUR";
 
     @NotNull
