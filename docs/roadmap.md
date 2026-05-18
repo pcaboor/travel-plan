@@ -1,4 +1,4 @@
-# Roadmap & Audit — Travel Management System
+  # Roadmap & Audit — Travel Management System
 
 Document de référence consulté par Claude pour suivre l'état du projet et les décisions d'architecture. À tenir à jour à chaque phase.
 
@@ -35,7 +35,7 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 | 2 | **Auth-service JWT + RBAC** | ✅ Phase 2 terminée |
 | 3 | **CRUD admin/travel + bookings read + tests** | ✅ Phase 3 terminée |
 | 4 | **Admin Dashboard (responsive React/TS)** | ✅ Phase 4 terminée |
-| 5 | Gateway + reverse proxy TLS | ⏸ |
+| 5 | **TLS gateway sur le dashboard nginx** | ✅ Phase 5 terminée |
 | 6 | Intégrations Stripe + PayPal | ⏸ |
 | 7 | Vault + logging centralisé | ⏸ |
 | 8 | Bonus K8s + E2E | ⏸ |
@@ -88,6 +88,13 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 - En dev, Vite proxy `/api/auth`, `/api/admin`, `/api/travels` vers les services backends. En prod, nginx (du Dockerfile frontend) sert le bundle et reverse-proxy les `/api/*`
 - Docker compose : `admin-dashboard` exposé sur `http://localhost:5173`, attaché à `travel-edge` (public) + `travel-internal` (pour DNS des services). Backend services restent sur `travel-internal` (internal: true) — pas de port publié
 - Tests UI navigateur **non automatisés** dans cette phase. Build prod et type-check stricts validés (`npm run build`). E2E reporté en phase 8
+
+### TLS gateway (phase 5)
+- TLS terminé au nginx du `admin-dashboard`. Cert self-signed généré pendant le build de l'image (`openssl req -x509`) avec SAN `localhost,travelplan.local,127.0.0.1`, valable 825 jours. Bind sur 443 (mappé 5443 sur l'hôte). Port 80 (5173) → 301 vers HTTPS
+- Headers de sécurité : HSTS (`max-age=31536000`), `X-Frame-Options DENY`, `X-Content-Type-Options nosniff`, `Referrer-Policy strict-origin-when-cross-origin` ajoutés à toutes les réponses
+- Override en prod : monter un vrai cert dans le dossier pointé par `TLS_CERT_DIR` (`.env`), qui se retrouve dans `/etc/nginx/certs/external` du container. Path Let's Encrypt déféré à un ingress externe (Traefik / cert-manager K8s en phase 8)
+- `CORS_ALLOWED_ORIGINS` étendu pour inclure `https://localhost:5443`
+- Services backend restent en HTTP sur le réseau interne `travel-internal` (`internal: true`). Pas de mTLS interne en phase 5 — c'est isolé Docker pour l'instant
 
 ## Conventions
 
