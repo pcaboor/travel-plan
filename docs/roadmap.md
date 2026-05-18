@@ -32,7 +32,7 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 | # | Chantier | Statut |
 |---|---|---|
 | 1 | **Schéma BDD + entités JPA + migrations Flyway + Neo4j** | ✅ Phase 1 terminée |
-| 2 | Auth-service JWT + RBAC | ⏸ |
+| 2 | **Auth-service JWT + RBAC** | ✅ Phase 2 terminée |
 | 3 | CRUD admin-service (users, travels, payments) + tests | ⏸ |
 | 4 | Admin Dashboard (responsive, Chrome/Firefox) | ⏸ |
 | 5 | Gateway + reverse proxy TLS | ⏸ |
@@ -65,6 +65,13 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 - Admin-service : `@DataJpaTest` avec H2 (mode PostgreSQL), Flyway désactivé en test, schéma régénéré par Hibernate via `ddl-auto: create-drop`
 - Travel-service : `@DataNeo4jTest` avec Testcontainers Neo4j (requiert Docker pour le run)
 - Lombok configuré comme annotation processor au niveau du parent pom (`<build><plugins>`, pas `<pluginManagement>` car Spring Boot parent override sinon)
+
+### Auth & JWT (phase 2)
+- HS256 symétrique. Le `JWT_SECRET` doit faire ≥ 32 bytes (validation au boot dans les deux services)
+- `auth-service` émet les tokens. Claims : `sub` (user id UUID), `email`, `roles` (array), `iss`, `iat`, `exp`
+- `admin-service` valide les tokens en resource server (`spring-boot-starter-oauth2-resource-server`) avec la même clé. Le claim `roles` est mappé en `ROLE_X` authorities pour `@PreAuthorize`
+- `auth-service` partage la table `users`/`roles` avec `admin-service` (Flyway désactivé côté auth, `ddl-auto: validate`). Pas de duplication de migrations
+- Bootstrap admin au boot via `AdminBootstrapper` (ApplicationRunner). Email et mot de passe configurables via `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD`
 
 ## Conventions
 

@@ -17,6 +17,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+travelplan:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-please-32bytes-minimum-xx}
+    issuer: ${JWT_ISSUER:travelplan-auth}
+
 server:
   port: 8082
 

@@ -1,23 +1,31 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:admin_service_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:auth_service_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     username: sa
     password: ""
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
+    defer-datasource-initialization: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-        format_sql: false
   flyway:
     enabled: false
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:test-data.sql
 
 travelplan:
   jwt:
     secret: test-secret-32-bytes-minimum-please-xxxxxxxx
     issuer: travelplan-auth-test
+    access-token-ttl-minutes: 5
+  bootstrap:
+    admin-email: bootstrap-admin@example.com
+    admin-password: BootstrapPass123!
 
 logging:
   level:

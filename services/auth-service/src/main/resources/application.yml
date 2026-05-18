@@ -1,6 +1,25 @@
 spring:
   application:
     name: auth-service
+  datasource:
+    url: ${AUTH_DATABASE_URL:jdbc:h2:mem:auth_service;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
+    username: ${AUTH_DATABASE_USERNAME:sa}
+    password: ${AUTH_DATABASE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: false
+
+travelplan:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-please-32bytes-minimum-xx}
+    issuer: ${JWT_ISSUER:travelplan-auth}
+    access-token-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:60}
+  bootstrap:
+    admin-email: ${ADMIN_BOOTSTRAP_EMAIL:admin@travelplan.local}
+    admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:ChangeMe123!}
 
 server:
   port: 8081
