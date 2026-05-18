@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:payment_service_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS payment
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        default_schema: payment
+  flyway:
+    enabled: false
+
+travelplan:
+  jwt:
+    secret: test-secret-32-bytes-minimum-please-xxxxxxxx
+    issuer: travelplan-auth-test
+  cors:
+    allowed-origins: http://localhost:5173
+
+payment:
+  providers:
+    stripe:
+      enabled: true
+      api-key: sk_test_dummy
+      webhook-secret: whsec_test_dummy
+    paypal:
+      enabled: true
+      client-id: dummy-client
+      client-secret: dummy-secret
+      api-base: http://localhost:65535
+      webhook-id: dummy-webhook
+
+logging:
+  level:
+    org.hibernate.SQL: WARN

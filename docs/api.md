@@ -59,11 +59,28 @@ Payload login : `{ "email": "...", "password": "..." }`
 
 Le `POST`/`PUT` accepte un payload imbriqué pour `destinations`, `activities`, `accommodations`, `transportations`. Les sous-collections sont remplacées au `PUT` si elles sont non-null dans le payload.
 
+## payment-service (port 8084)
+
+| Méthode | Chemin | Rôles |
+|---|---|---|
+| `POST` | `/api/payments/intents` | ADMIN/MANAGER/USER |
+| `GET`  | `/api/payments/intents/:id` | ADMIN/MANAGER/USER |
+| `POST` | `/api/payments/intents/:id/refresh` | ADMIN/MANAGER/USER |
+| `POST` | `/api/payments/intents/:id/cancel` | ADMIN/MANAGER |
+| `POST` | `/api/payments/webhooks/stripe` | public (signature `Stripe-Signature` requise) |
+| `POST` | `/api/payments/webhooks/paypal` | public (headers `Paypal-*` requis) |
+
+Payload create : `{ provider: STRIPE | PAYPAL, amount, currency, bookingRefId? }`. La réponse contient le `providerIntentId`, le `clientSecret` Stripe (à passer à Stripe.js dans le frontend) ou l'`approvalUrl` PayPal (à rediriger l'utilisateur).
+
+Si le provider n'est pas configuré (`STRIPE_ENABLED=false` ou clés vides), l'endpoint renvoie `503 provider_disabled`.
+
 ## Codes d'erreur communs
 
 | Code | `error` | Cas |
 |---|---|---|
 | 400 | `validation_error` | Payload invalide (champ trop court, type incorrect…) |
+| 502 | `provider_error` | Stripe/PayPal a renvoyé une erreur en aval |
+| 503 | `provider_disabled` | Le provider de paiement n'est pas configuré sur ce deployment |
 | 401 | — | Token absent ou invalide |
 | 403 | `forbidden` | Rôle insuffisant |
 | 404 | `not_found` | Ressource inexistante |
