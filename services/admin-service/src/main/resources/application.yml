@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: admin-service
+  datasource:
+    url: ${ADMIN_DATABASE_URL:jdbc:h2:mem:admin_service;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
+    username: ${ADMIN_DATABASE_USERNAME:sa}
+    password: ${ADMIN_DATABASE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
