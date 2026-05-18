@@ -1,0 +1,36 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Build tools
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Docker and generated data
+docker-data/
+
+# Node/front-end future workspace
+node_modules/
+dist/
+build/
