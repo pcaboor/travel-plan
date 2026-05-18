@@ -76,6 +76,7 @@ If Maven is not installed locally, the Jenkins pipeline and Docker-based build c
 - [Architecture](docs/architecture.md)
 - [Database schema](docs/database-schema.md)
 - [Security baseline](docs/security.md)
+- [API endpoints](docs/api.md)
 - [Roadmap](docs/roadmap.md)
 - [Ansible deployment](infra/ansible/README.md)
 - [Jenkins setup](infra/jenkins/README.md)

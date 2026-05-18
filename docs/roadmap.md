@@ -33,7 +33,7 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 |---|---|---|
 | 1 | **Schéma BDD + entités JPA + migrations Flyway + Neo4j** | ✅ Phase 1 terminée |
 | 2 | **Auth-service JWT + RBAC** | ✅ Phase 2 terminée |
-| 3 | CRUD admin-service (users, travels, payments) + tests | ⏸ |
+| 3 | **CRUD admin/travel + bookings read + tests** | ✅ Phase 3 terminée |
 | 4 | Admin Dashboard (responsive, Chrome/Firefox) | ⏸ |
 | 5 | Gateway + reverse proxy TLS | ⏸ |
 | 6 | Intégrations Stripe + PayPal | ⏸ |
@@ -69,9 +69,15 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 ### Auth & JWT (phase 2)
 - HS256 symétrique. Le `JWT_SECRET` doit faire ≥ 32 bytes (validation au boot dans les deux services)
 - `auth-service` émet les tokens. Claims : `sub` (user id UUID), `email`, `roles` (array), `iss`, `iat`, `exp`
-- `admin-service` valide les tokens en resource server (`spring-boot-starter-oauth2-resource-server`) avec la même clé. Le claim `roles` est mappé en `ROLE_X` authorities pour `@PreAuthorize`
+- `admin-service` et `travel-service` valident les tokens en resource server (`spring-boot-starter-oauth2-resource-server`) avec la même clé. Le claim `roles` est mappé en `ROLE_X` authorities pour `@PreAuthorize`
 - `auth-service` partage la table `users`/`roles` avec `admin-service` (Flyway désactivé côté auth, `ddl-auto: validate`). Pas de duplication de migrations
 - Bootstrap admin au boot via `AdminBootstrapper` (ApplicationRunner). Email et mot de passe configurables via `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD`
+
+### CRUD (phase 3)
+- `admin-service` : CRUD complet `users` + `payment_methods` (sous `/api/admin/users/:userId/payment-methods`) + lecture/cancel `bookings`. Matrice RBAC : ADMIN tous droits, MANAGER lecture + cancel-by-travel, VIEWER lecture seule
+- `travel-service` : CRUD `travels` avec sous-ressources `destinations`/`activities`/`accommodations`/`transportations` portées par les inputs du DTO (le service crée et attache en cascade). ADMIN+MANAGER write, USER+ read
+- Cross-store sync : `POST /api/admin/bookings/cancel-by-travel/:travelRefId` permet à `travel-service` (ou un orchestrateur) de notifier `admin-service` lorsqu'un voyage est supprimé. Pas de webhook automatique en phase 3 — c'est un endpoint pull
+- Maven compiler doit avoir `<parameters>true</parameters>` pour que Spring résolve les `@PathVariable` par nom (sinon `Name for argument ... not specified`)
 
 ## Conventions
 
