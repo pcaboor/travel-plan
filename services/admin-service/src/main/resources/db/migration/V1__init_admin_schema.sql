@@ -58,7 +58,7 @@ CREATE TABLE bookings (
     travel_ref_id      UUID           NOT NULL,
     payment_method_id  UUID           REFERENCES payment_methods (id) ON DELETE SET NULL,
     amount             NUMERIC(12,2)  NOT NULL,
-    currency           CHAR(3)        NOT NULL DEFAULT 'EUR',
+    currency           VARCHAR(3)     NOT NULL DEFAULT 'EUR',
     status             VARCHAR(32)    NOT NULL DEFAULT 'PENDING',
     created_at         TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     updated_at         TIMESTAMPTZ    NOT NULL DEFAULT NOW(),

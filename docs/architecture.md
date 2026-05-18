@@ -4,11 +4,12 @@ The project is organized as a microservices monorepo. Each service owns a bounde
 
 ```mermaid
 flowchart LR
-  adminUser[Admin Browser] --> reverseProxy[Future TLS Reverse Proxy]
-  reverseProxy --> authService[auth-service]
-  reverseProxy --> adminService[admin-service]
-  adminService --> postgres[(PostgreSQL)]
-  adminService --> travelService[travel-service]
+  adminUser[Admin Browser] --> dashboard[admin-dashboard nginx]
+  dashboard -->|/api/auth| authService[auth-service]
+  dashboard -->|/api/admin| adminService[admin-service]
+  dashboard -->|/api/travels| travelService[travel-service]
+  authService --> postgres[(PostgreSQL)]
+  adminService --> postgres
   adminService --> paymentService[payment-service]
   travelService --> neo4j[(Neo4j)]
   paymentService --> stripe[Stripe API]
@@ -19,10 +20,11 @@ flowchart LR
 
 ## Services
 
-- `auth-service`: authentication and authorization boundary for the admin dashboard.
-- `admin-service`: future admin CRUD orchestration for users, travels, and payment methods.
-- `travel-service`: future travel and destination management.
+- `auth-service`: authentication and authorization boundary for the admin dashboard. Issues HS256 JWTs.
+- `admin-service`: CRUD for users, payment methods, and read-only bookings.
+- `travel-service`: CRUD for travels and the related Neo4j graph (destinations, activities, accommodations, transportations).
 - `payment-service`: payment provider boundary prepared for Stripe and PayPal.
+- `admin-dashboard`: React + Vite single-page app served by nginx, talks to the services via `/api/*`.
 
 ## Data Stores
 
