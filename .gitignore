@@ -30,6 +30,11 @@ secrets/
 # Docker and generated data
 docker-data/
 
+# TLS certificates dropped at runtime — never commit private keys
+tls-certs/*
+!tls-certs/.gitkeep
+!tls-certs/README.md
+
 # Node/front-end future workspace
 node_modules/
 dist/

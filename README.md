@@ -51,6 +51,10 @@ Start the stack:
 docker compose -f infra/docker/docker-compose.yml --env-file .env up --build
 ```
 
+The admin dashboard is served at:
+- `https://localhost:5443` (TLS, self-signed cert — accept the browser warning in dev)
+- `http://localhost:5173` (redirects 301 to HTTPS)
+
 Run tests locally when Maven is installed:
 
 ```bash

@@ -4,9 +4,12 @@ This foundation prepares the project for secure deployment without committing pr
 
 ## Transport Security
 
-- Public traffic should terminate TLS at a reverse proxy or ingress in front of the services.
-- Internal service traffic currently stays on Docker networks. Production deployment should use private networking and firewall rules.
-- HTTP services are not directly exposed from the internal application network in the base Compose stack.
+- Public traffic terminates TLS at the `admin-dashboard` nginx (port 5443). The nginx container runs `listen 443 ssl` with TLSv1.2/1.3, modern ciphers, and HSTS (`max-age=31536000`) on every response.
+- Port 80 (5173 on the host) returns a 301 to `https://$host:5443$request_uri`. No application traffic is served over plain HTTP.
+- A self-signed certificate is generated at image build time via `openssl req -x509` for local development. In production, drop a real cert/key pair into the path mounted at `/etc/nginx/certs/external` (configured via `TLS_CERT_DIR`) and either symlink them over the generated ones or update `nginx.conf` to read from `external/`.
+- Recommended production path: terminate Let's Encrypt via an external ingress (Traefik, Caddy, or AWS ALB) and forward to the dashboard over the internal network, or use cert-manager with Kubernetes (phase 8 bonus).
+- Internal service traffic stays on the `travel-internal` Docker network (`internal: true`). No backend service is published on the host. Production deployment should layer firewall rules and optionally mTLS between services.
+- The browser will warn about the self-signed certificate on first visit — accept the warning in dev or trust the cert in your OS keychain.
 
 ## Network Isolation
 

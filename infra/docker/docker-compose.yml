@@ -224,6 +224,7 @@ services:
     restart: unless-stopped
     ports:
       - "5173:80"
+      - "5443:443"
     depends_on:
       auth-service:
         condition: service_healthy
@@ -235,7 +236,7 @@ services:
       - travel-edge
       - travel-internal
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q --no-check-certificate -O /dev/null https://localhost/ || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
