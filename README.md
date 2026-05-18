@@ -30,6 +30,38 @@ infra/      Docker, Jenkins, SonarQube, and Ansible assets
 docs/       Architecture, security, and operational documentation
 ```
 
+## Quick Start
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Validate the Compose file:
+
+```bash
+docker compose -f infra/docker/docker-compose.yml --env-file .env.example config --quiet
+```
+
+Start the stack:
+
+```bash
+docker compose -f infra/docker/docker-compose.yml --env-file .env up --build
+```
+
+Run tests locally when Maven is installed:
+
+```bash
+mvn clean test
+```
+
+Run tests without local Maven:
+
+```bash
+docker run --rm -v "$PWD:/workspace" -w /workspace maven:3.9.9-eclipse-temurin-21 mvn clean test
+```
+
 ## Local Requirements
 
 - Git
@@ -38,3 +70,10 @@ docs/       Architecture, security, and operational documentation
 - Maven 3.9+
 
 If Maven is not installed locally, the Jenkins pipeline and Docker-based build commands can still run in a Maven container.
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Security baseline](docs/security.md)
+- [Ansible deployment](infra/ansible/README.md)
+- [Jenkins setup](infra/jenkins/README.md)
