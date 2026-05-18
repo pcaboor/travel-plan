@@ -46,9 +46,19 @@ services:
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-jdbc:postgresql://postgres:5432/travel_plan}
+      AUTH_DATABASE_USERNAME: ${AUTH_DATABASE_USERNAME:-travel_plan}
+      AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:-change_me_postgres}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
+      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
+      JWT_ACCESS_TTL_MINUTES: ${JWT_ACCESS_TTL_MINUTES:-60}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-admin@travelplan.local}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-ChangeMe123!}
     depends_on:
       postgres:
         condition: service_healthy
+      admin-service:
+        condition: service_started
     deploy:
       replicas: 2
     healthcheck:
@@ -69,6 +79,8 @@ services:
       ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-jdbc:postgresql://postgres:5432/travel_plan}
       ADMIN_DATABASE_USERNAME: ${ADMIN_DATABASE_USERNAME:-travel_plan}
       ADMIN_DATABASE_PASSWORD: ${ADMIN_DATABASE_PASSWORD:-change_me_postgres}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
+      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
     depends_on:
       postgres:
         condition: service_healthy
