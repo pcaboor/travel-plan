@@ -1,6 +1,10 @@
 spring:
   application:
     name: payment-service
+  cloud:
+    vault:
+      enabled: false
+      token: vault-disabled-placeholder
   datasource:
     url: ${PAYMENT_DATABASE_URL:jdbc:h2:mem:payment_service;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
     username: ${PAYMENT_DATABASE_USERNAME:sa}

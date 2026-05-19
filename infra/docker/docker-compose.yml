@@ -52,21 +52,19 @@ services:
       dockerfile: services/auth-service/Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,vault
+      VAULT_URI: http://vault:8200
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN:-travelplan-root-token}
       AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-jdbc:postgresql://postgres:5432/travel_plan}
-      AUTH_DATABASE_USERNAME: ${AUTH_DATABASE_USERNAME:-travel_plan}
-      AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:-change_me_postgres}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
-      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
       JWT_ACCESS_TTL_MINUTES: ${JWT_ACCESS_TTL_MINUTES:-60}
-      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-admin@travelplan.local}
-      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-ChangeMe123!}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://localhost:5443,http://localhost:5173}
     depends_on:
       postgres:
         condition: service_healthy
       admin-service:
         condition: service_started
+      vault-init:
+        condition: service_completed_successfully
     deploy:
       replicas: 2
     healthcheck:
@@ -83,16 +81,16 @@ services:
       dockerfile: services/admin-service/Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,vault
+      VAULT_URI: http://vault:8200
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN:-travelplan-root-token}
       ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:-jdbc:postgresql://postgres:5432/travel_plan}
-      ADMIN_DATABASE_USERNAME: ${ADMIN_DATABASE_USERNAME:-travel_plan}
-      ADMIN_DATABASE_PASSWORD: ${ADMIN_DATABASE_PASSWORD:-change_me_postgres}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
-      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://localhost:5443,http://localhost:5173}
     depends_on:
       postgres:
         condition: service_healthy
+      vault-init:
+        condition: service_completed_successfully
     deploy:
       replicas: 2
     healthcheck:
@@ -109,17 +107,17 @@ services:
       dockerfile: services/travel-service/Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,vault
+      VAULT_URI: http://vault:8200
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN:-travelplan-root-token}
       NEO4J_URI: ${TRAVEL_NEO4J_URI:-bolt://neo4j:7687}
-      NEO4J_USER: ${NEO4J_USER:-neo4j}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-change_me_neo4j}
       NEO4J_DATABASE: ${TRAVEL_NEO4J_DATABASE:-neo4j}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
-      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://localhost:5443,http://localhost:5173}
     depends_on:
       neo4j:
         condition: service_healthy
+      vault-init:
+        condition: service_completed_successfully
     deploy:
       replicas: 2
     healthcheck:
@@ -136,24 +134,19 @@ services:
       dockerfile: services/payment-service/Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,vault
+      VAULT_URI: http://vault:8200
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN:-travelplan-root-token}
       PAYMENT_DATABASE_URL: ${PAYMENT_DATABASE_URL:-jdbc:postgresql://postgres:5432/travel_plan}
-      PAYMENT_DATABASE_USERNAME: ${PAYMENT_DATABASE_USERNAME:-travel_plan}
-      PAYMENT_DATABASE_PASSWORD: ${PAYMENT_DATABASE_PASSWORD:-change_me_postgres}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
-      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,https://localhost:5443}
       STRIPE_ENABLED: ${STRIPE_ENABLED:-false}
-      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       PAYPAL_ENABLED: ${PAYPAL_ENABLED:-false}
-      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
-      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
       PAYPAL_API_BASE: ${PAYPAL_API_BASE:-https://api-m.sandbox.paypal.com}
-      PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
+      vault-init:
+        condition: service_completed_successfully
     deploy:
       replicas: 2
     healthcheck:
@@ -257,6 +250,106 @@ services:
       timeout: 5s
       retries: 5
 
+  vault:
+    image: hashicorp/vault:1.18
+    container_name: travel-vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:-travelplan-root-token}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+    ports:
+      - "8200:8200"
+    healthcheck:
+      test: ["CMD-SHELL", "vault status > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - travel-internal
+      - travel-edge
+
+  vault-init:
+    image: hashicorp/vault:1.18
+    container_name: travel-vault-init
+    depends_on:
+      vault:
+        condition: service_healthy
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN:-travelplan-root-token}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32bytes-minimum-xx}
+      JWT_ISSUER: ${JWT_ISSUER:-travelplan-auth}
+      AUTH_DATABASE_USERNAME: ${AUTH_DATABASE_USERNAME:-travel_plan}
+      AUTH_DATABASE_PASSWORD: ${AUTH_DATABASE_PASSWORD:-change_me_postgres}
+      ADMIN_DATABASE_USERNAME: ${ADMIN_DATABASE_USERNAME:-travel_plan}
+      ADMIN_DATABASE_PASSWORD: ${ADMIN_DATABASE_PASSWORD:-change_me_postgres}
+      NEO4J_USER: ${NEO4J_USER:-neo4j}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-change_me_neo4j}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-admin@travelplan.local}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-ChangeMe123!}
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
+      PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID:-}
+    entrypoint: ["/bin/sh", "/seed/seed.sh"]
+    volumes:
+      - ./vault/seed.sh:/seed/seed.sh:ro
+    networks:
+      - travel-internal
+
+  loki:
+    image: grafana/loki:3.3.0
+    container_name: travel-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3100/ready | grep -q ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks:
+      - travel-observability
+
+  promtail:
+    image: grafana/promtail:3.3.0
+    container_name: travel-promtail
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    command: -config.file=/etc/promtail/config.yaml
+    volumes:
+      - ./promtail/config.yaml:/etc/promtail/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - travel-observability
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: travel-grafana
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "5440:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - travel-observability
+
 networks:
   travel-internal:
     driver: bridge
@@ -264,6 +357,8 @@ networks:
   travel-ci:
     driver: bridge
   travel-edge:
+    driver: bridge
+  travel-observability:
     driver: bridge
 
 volumes:
@@ -275,3 +370,5 @@ volumes:
   sonarqube_extensions:
   sonarqube_logs:
   jenkins_home:
+  loki_data:
+  grafana_data:

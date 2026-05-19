@@ -3,7 +3,7 @@ WORKDIR /workspace
 
 COPY pom.xml ./pom.xml
 COPY services ./services
-RUN mvn -pl services/auth-service -am package -DskipTests
+RUN mvn -pl services/auth-service -am package -DskipTests -P vault
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

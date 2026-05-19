@@ -1,6 +1,10 @@
 spring:
   application:
     name: auth-service
+  cloud:
+    vault:
+      enabled: false
+      token: vault-disabled-placeholder
   datasource:
     url: ${AUTH_DATABASE_URL:jdbc:h2:mem:auth_service;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
     username: ${AUTH_DATABASE_USERNAME:sa}

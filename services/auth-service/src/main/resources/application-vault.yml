@@ -1,0 +1,18 @@
+spring:
+  config:
+    import: vault://
+  cloud:
+    vault:
+      enabled: true
+      uri: ${VAULT_URI:http://vault:8200}
+      token: ${VAULT_TOKEN:}
+      authentication: token
+      fail-fast: true
+      kv:
+        enabled: true
+        backend: secret
+        default-context: travelplan/shared
+        application-name: travelplan/auth-service
+      config:
+        lifecycle:
+          enabled: false

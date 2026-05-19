@@ -37,7 +37,7 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 | 4 | **Admin Dashboard (responsive React/TS)** | ✅ Phase 4 terminée |
 | 5 | **TLS gateway sur le dashboard nginx** | ✅ Phase 5 terminée |
 | 6 | **Intégrations Stripe + PayPal (sandbox réel)** | ✅ Phase 6 terminée |
-| 7 | Vault + logging centralisé | ⏸ |
+| 7 | **Vault dev + Loki/Grafana/promtail + JSON logs** | ✅ Phase 7 terminée |
 | 8 | Bonus K8s + E2E | ⏸ |
 
 ## Décisions d'architecture
@@ -105,6 +105,14 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 - Webhooks publics (whitelist Security) : `/api/payments/webhooks/stripe` et `/paypal`. Signature obligatoire — un webhook invalide reçoit 502 (Stripe) ou 400 (PayPal)
 - Si un provider est désactivé (`STRIPE_ENABLED=false` ou clés absentes), `ProviderException.disabled` → réponse 503 avec `error: provider_disabled`
 - Tests : 11 tests payment-service (MockMvc + adapters mockés via `@MockBean`, pas d'appel réseau réel). Pour tester en vrai en local, fournir des clés Stripe test et utiliser `stripe listen --forward-to https://localhost:5443/api/payments/webhooks/stripe`
+
+### Secrets & logging (phase 7)
+- **Vault** en mode dev, root token affiché via `VAULT_ROOT_TOKEN`. Conteneur `vault-init` (idempotent) écrit `secret/travelplan/{shared,auth-service,admin-service,travel-service,payment-service}` à partir des env vars du compose (qui sortent du `.env`)
+- Côté Spring : la dépendance `spring-cloud-starter-vault-config` est **incluse uniquement via le profile Maven `vault`** (les Dockerfile builds avec `-P vault`). Sans ce profile, l'autoconfig Vault n'est pas sur le classpath donc les tests `mvn test` tournent sans devoir mocker Vault
+- En runtime Docker, les services activent `spring.profiles.active=docker,vault` et chargent `application-vault.yml` qui pose `spring.config.import=vault://` + `spring.cloud.vault.kv.application-name=travelplan/<service>`
+- Trade-off assumé : on garde quand même `.env` comme source de vérité pour Vault (le seed lit les env vars). En vrai prod on remplacerait ce seed par AppRole + secrets injectés via CI/CD ou Ansible
+- **Loki + Grafana + promtail** : `promtail` scrape les logs Docker via le socket et le label `com.docker.compose.project`, parse les lignes JSON (level, correlationId, logger, message), envoie à Loki. Grafana sur `http://localhost:5440` avec datasource Loki provisionné + dashboard "TravelPlan logs" (search par `correlationId`)
+- **JSON logging** : `logback-spring.xml` dans chaque service utilise `LogstashEncoder` quand le profile `docker` est actif. Le `correlationId` du MDC (déjà posé par `CorrelationIdFilter` depuis la phase 1) ressort en attribut JSON, ce qui permet de filtrer une requête de bout en bout dans Grafana
 
 ## Conventions
 

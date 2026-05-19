@@ -1,6 +1,10 @@
 spring:
   application:
     name: travel-service
+  cloud:
+    vault:
+      enabled: false
+      token: vault-disabled-placeholder
   neo4j:
     uri: ${NEO4J_URI:bolt://neo4j:7687}
     authentication:
