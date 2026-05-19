@@ -59,6 +59,10 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
@@ -78,4 +82,16 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>vault</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-vault-config</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

@@ -1,6 +1,10 @@
 spring:
   application:
     name: admin-service
+  cloud:
+    vault:
+      enabled: false
+      token: vault-disabled-placeholder
   datasource:
     url: ${ADMIN_DATABASE_URL:jdbc:h2:mem:admin_service;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
     username: ${ADMIN_DATABASE_USERNAME:sa}

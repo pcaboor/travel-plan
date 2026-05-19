@@ -1,0 +1,78 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "Loki" },
+          "expr": "{project=\"docker\"} |= \"\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "All services",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "Loki" },
+          "expr": "{project=\"docker\"} |= \"$correlationId\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "By correlationId",
+      "type": "logs"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["travelplan"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "", "value": "" },
+        "label": "Correlation Id",
+        "name": "correlationId",
+        "options": [],
+        "query": "",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "TravelPlan logs",
+  "uid": "travelplan-logs",
+  "version": 1
+}

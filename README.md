@@ -9,6 +9,11 @@ This repository starts with the infrastructure and backend foundations required 
 - Java 21 and Spring Boot 3 microservices.
 - PostgreSQL for relational administration data.
 - Neo4j for graph-oriented travel and destination relationships.
+- HashiCorp Vault (dev mode) for service secrets; each Spring service is built
+  with the Maven `vault` profile and reads `secret/data/travelplan/<service>`
+  at boot.
+- Loki + Grafana + promtail for centralised JSON logs (per-request
+  `correlationId` ships through MDC for cross-service tracing).
 - Docker Compose for local provisioning and reproducible infrastructure.
 - Jenkins for CI/CD orchestration.
 - SonarQube for automated code-quality checks.
@@ -54,6 +59,13 @@ docker compose -f infra/docker/docker-compose.yml --env-file .env up --build
 The admin dashboard is served at:
 - `https://localhost:5443` (TLS, self-signed cert — accept the browser warning in dev)
 - `http://localhost:5173` (redirects 301 to HTTPS)
+
+Observability and secrets endpoints:
+- `http://localhost:5440` — Grafana (login `admin/admin`), the *TravelPlan logs*
+  dashboard streams every backend container with a `correlationId` filter.
+- `http://localhost:8200` — Vault UI / API (root token from `VAULT_ROOT_TOKEN`).
+  The `vault-init` container seeds `secret/travelplan/*` from the `.env` so the
+  services can read their database credentials, JWT secret, Stripe key, etc.
 
 Run tests locally when Maven is installed:
 
