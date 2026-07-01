@@ -1,4 +1,4 @@
-pipeline {
+  pipeline {
   agent any
 
   environment {
@@ -11,6 +11,13 @@ pipeline {
   options {
     timestamps()
     disableConcurrentBuilds()
+  }
+
+  triggers {
+    // Poll the Git repository every ~2 minutes and start a build when new
+    // commits land on the tracked branch. Local Jenkins can't receive GitHub
+    // webhooks, so polling is the practical auto-trigger here.
+    pollSCM('H/2 * * * *')
   }
 
   stages {
