@@ -27,6 +27,8 @@ travelplan:
     issuer: ${JWT_ISSUER:travelplan-auth}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  travel-service:
+    base-url: ${TRAVEL_SERVICE_URL:http://travel-service:8083}
 
 server:
   port: 8082
