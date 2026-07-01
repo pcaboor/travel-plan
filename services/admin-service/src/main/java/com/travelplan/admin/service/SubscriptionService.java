@@ -34,13 +34,16 @@ public class SubscriptionService {
     private final UserRepository users;
     private final TravelLookup travelLookup;
     private final PaymentLookup paymentLookup;
+    private final RecommendationSync recommendationSync;
 
     public SubscriptionService(BookingRepository bookings, UserRepository users,
-                               TravelLookup travelLookup, PaymentLookup paymentLookup) {
+                               TravelLookup travelLookup, PaymentLookup paymentLookup,
+                               RecommendationSync recommendationSync) {
         this.bookings = bookings;
         this.users = users;
         this.travelLookup = travelLookup;
         this.paymentLookup = paymentLookup;
+        this.recommendationSync = recommendationSync;
     }
 
     public SubscriptionResponse subscribe(UUID userId, UUID travelId, String authorization) {
@@ -97,6 +100,8 @@ public class SubscriptionService {
             throw new ConflictException("Payment not completed for this subscription");
         }
         booking.setStatus(BookingStatus.CONFIRMED);
-        return SubscriptionResponse.from(bookings.save(booking));
+        SubscriptionResponse response = SubscriptionResponse.from(bookings.save(booking));
+        recommendationSync.recordParticipation(travelId, authorization);
+        return response;
     }
 }
