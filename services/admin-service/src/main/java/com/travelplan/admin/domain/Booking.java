@@ -1,6 +1,7 @@
 package com.travelplan.admin.domain;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.hibernate.annotations.OnDelete;
@@ -63,6 +64,10 @@ public class Booking extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private BookingStatus status = BookingStatus.PENDING;
+
+    /** Denormalized copy of the travel's start date, used for the unsubscribe cutoff. */
+    @Column(name = "travel_start_date")
+    private LocalDate travelStartDate;
 
     @jakarta.persistence.PrePersist
     void ensureId() {

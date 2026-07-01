@@ -24,6 +24,10 @@ export default defineConfig({
         target: process.env.VITE_TRAVEL_URL ?? "http://localhost:8083",
         changeOrigin: true,
       },
+      "/api/subscriptions": {
+        target: process.env.VITE_ADMIN_URL ?? "http://localhost:8082",
+        changeOrigin: true,
+      },
     },
   },
 });
