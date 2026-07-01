@@ -3,10 +3,12 @@ package com.travelplan.travel.service;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +38,12 @@ public class TravelService {
         this.travelRepository = travelRepository;
     }
 
-    public TravelResponse create(TravelCreateRequest request) {
+    public TravelResponse create(TravelCreateRequest request, String managerId) {
         Travel travel = new Travel();
         apply(travel, request.title(), request.description(), request.startDate(), request.endDate(),
                 request.durationDays(), request.price(), request.currency(),
                 Optional.ofNullable(request.status()).orElse(TravelStatus.DRAFT));
+        travel.setManagerId(managerId);
         travel.setDestinations(buildDestinations(request.destinations()));
         travel.setActivities(buildActivities(request.activities()));
         travel.setAccommodations(buildAccommodations(request.accommodations()));
@@ -51,8 +54,9 @@ public class TravelService {
         return TravelResponse.from(travelRepository.save(travel));
     }
 
-    public TravelResponse update(String id, TravelUpdateRequest request) {
+    public TravelResponse update(String id, TravelUpdateRequest request, String currentUserId, boolean isAdmin) {
         Travel travel = findOrThrow(id);
+        ensureOwnerOrAdmin(travel, currentUserId, isAdmin);
         if (request.title() != null) {
             travel.setTitle(request.title());
         }
@@ -93,11 +97,17 @@ public class TravelService {
         return TravelResponse.from(travelRepository.save(travel));
     }
 
-    public void delete(String id) {
-        if (!travelRepository.existsById(id)) {
-            throw new NotFoundException("Travel not found: " + id);
-        }
+    public void delete(String id, String currentUserId, boolean isAdmin) {
+        Travel travel = findOrThrow(id);
+        ensureOwnerOrAdmin(travel, currentUserId, isAdmin);
         travelRepository.deleteById(id);
+    }
+
+    /** A manager may only mutate the travels they own; an admin may mutate any. */
+    private void ensureOwnerOrAdmin(Travel travel, String currentUserId, boolean isAdmin) {
+        if (!isAdmin && !Objects.equals(travel.getManagerId(), currentUserId)) {
+            throw new AccessDeniedException("You do not own this travel");
+        }
     }
 
     @Transactional(readOnly = true)

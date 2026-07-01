@@ -24,6 +24,7 @@ public record TravelResponse(
         BigDecimal price,
         String currency,
         TravelStatus status,
+        String managerId,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         List<DestinationView> destinations,
@@ -68,7 +69,7 @@ public record TravelResponse(
                 t.getId(), t.getTitle(), t.getDescription(),
                 t.getStartDate(), t.getEndDate(), t.getDurationDays(),
                 t.getPrice(), t.getCurrency(), t.getStatus(),
-                t.getCreatedAt(), t.getUpdatedAt(),
+                t.getManagerId(), t.getCreatedAt(), t.getUpdatedAt(),
                 t.getDestinations().stream()
                         .map(v -> DestinationView.from(v.getDestination(), v.getOrder()))
                         .toList(),

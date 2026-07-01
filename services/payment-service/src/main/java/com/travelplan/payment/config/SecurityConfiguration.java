@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,6 +34,24 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
+
+    /**
+     * Role hierarchy: ADMIN implies MANAGER, MANAGER implies USER (Traveler).
+     * Lets @PreAuthorize("hasRole('USER')") pass for managers/admins without
+     * listing every role explicitly.
+     */
+    @Bean
+    static RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy(
+                "ROLE_ADMIN > ROLE_MANAGER\nROLE_MANAGER > ROLE_USER");
+    }
+
+    @Bean
+    static MethodSecurityExpressionHandler methodSecurityExpressionHandler(RoleHierarchy roleHierarchy) {
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+        handler.setRoleHierarchy(roleHierarchy);
+        return handler;
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,

@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,24 +49,31 @@ public class TravelController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public ResponseEntity<TravelResponse> create(@Valid @RequestBody TravelCreateRequest request) {
-        TravelResponse created = service.create(request);
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<TravelResponse> create(@Valid @RequestBody TravelCreateRequest request,
+                                                 @AuthenticationPrincipal Jwt jwt) {
+        TravelResponse created = service.create(request, jwt.getSubject());
         URI location = UriComponentsBuilder.fromPath("/api/travels/{id}")
                 .buildAndExpand(created.id()).toUri();
         return ResponseEntity.created(location).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public TravelResponse update(@PathVariable String id, @Valid @RequestBody TravelUpdateRequest request) {
-        return service.update(id, request);
+    @PreAuthorize("hasRole('MANAGER')")
+    public TravelResponse update(@PathVariable String id, @Valid @RequestBody TravelUpdateRequest request,
+                                 @AuthenticationPrincipal Jwt jwt) {
+        return service.update(id, request, jwt.getSubject(), isAdmin(jwt));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        service.delete(id);
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+        service.delete(id, jwt.getSubject(), isAdmin(jwt));
         return ResponseEntity.noContent().build();
+    }
+
+    private static boolean isAdmin(Jwt jwt) {
+        java.util.List<String> roles = jwt.getClaimAsStringList("roles");
+        return roles != null && roles.contains("ADMIN");
     }
 }

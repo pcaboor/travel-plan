@@ -28,12 +28,16 @@ public final class JwtTestFactory {
     }
 
     public String bearer(String email, List<String> roles) {
+        return bearer(UUID.randomUUID().toString(), email, roles);
+    }
+
+    public String bearer(String subject, String email, List<String> roles) {
         try {
             SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             Instant now = Instant.now();
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
                     .issuer(issuer)
-                    .subject(UUID.randomUUID().toString())
+                    .subject(subject)
                     .claim("email", email)
                     .claim("roles", roles)
                     .issueTime(Date.from(now))
