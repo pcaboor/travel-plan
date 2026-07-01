@@ -121,6 +121,7 @@ Default admin credentials are seeded by `auth-service` on first boot — see
 
 - [Architecture](docs/architecture.md)
 - [CI/CD, architecture & tooling overview](docs/ci-cd-architecture.md)
+- [Jenkinsfile, Grafana & Neo4j — explainer](docs/jenkins-grafana-neo4j.md)
 - [Database schema](docs/database-schema.md)
 - [Security baseline](docs/security.md)
 - [API endpoints](docs/api.md)
