@@ -5,7 +5,7 @@ pipeline {
     MAVEN_IMAGE = 'maven:3.9.9-eclipse-temurin-21'
     SONAR_HOST_URL = credentials('sonar-host-url')
     SONAR_TOKEN = credentials('sonar-token')
-    MAVEN_RUN_ARGS = '-v maven_repository:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e TESTCONTAINERS_RYUK_DISABLED=true -e TESTCONTAINERS_CHECKS_DISABLE=true'
+    MAVEN_RUN_ARGS = '-v maven_repository:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e TESTCONTAINERS_RYUK_DISABLED=true -e TESTCONTAINERS_CHECKS_DISABLE=true -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal'
   }
 
   options {
