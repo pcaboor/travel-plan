@@ -78,7 +78,8 @@ class SubscriptionControllerIntegrationTest {
         travelId = UUID.randomUUID();
         // Default: a published travel starting well beyond the cutoff.
         when(travelLookup.fetch(any(), any())).thenReturn(Optional.of(
-                new TravelSnapshot(LocalDate.now().plusDays(30), new BigDecimal("500.00"), "EUR", "PUBLISHED")));
+                new TravelSnapshot(LocalDate.now().plusDays(30), new BigDecimal("500.00"), "EUR", "PUBLISHED",
+                        UUID.randomUUID().toString())));
     }
 
     @Test
@@ -102,7 +103,8 @@ class SubscriptionControllerIntegrationTest {
     @Test
     void subscribing_to_an_unpublished_travel_conflicts() throws Exception {
         when(travelLookup.fetch(any(), any())).thenReturn(Optional.of(
-                new TravelSnapshot(LocalDate.now().plusDays(30), new BigDecimal("500.00"), "EUR", "DRAFT")));
+                new TravelSnapshot(LocalDate.now().plusDays(30), new BigDecimal("500.00"), "EUR", "DRAFT",
+                        UUID.randomUUID().toString())));
         mockMvc.perform(post("/api/subscriptions/{id}", travelId).header("Authorization", travelerAuth))
                 .andExpect(status().isConflict());
     }

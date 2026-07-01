@@ -46,6 +46,10 @@ public class Feedback extends AuditableEntity {
     @Column(name = "comment", length = 2000)
     private String comment;
 
+    /** Denormalized id of the manager who owns the reviewed travel, for per-manager stats. */
+    @Column(name = "manager_id")
+    private UUID managerId;
+
     @PrePersist
     void ensureId() {
         if (this.id == null) {

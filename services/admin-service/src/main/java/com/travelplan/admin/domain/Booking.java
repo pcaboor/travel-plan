@@ -69,6 +69,10 @@ public class Booking extends AuditableEntity {
     @Column(name = "travel_start_date")
     private LocalDate travelStartDate;
 
+    /** Denormalized id of the manager who owns the travel, for per-manager stats. */
+    @Column(name = "manager_id")
+    private UUID managerId;
+
     @jakarta.persistence.PrePersist
     void ensureId() {
         if (this.id == null) {

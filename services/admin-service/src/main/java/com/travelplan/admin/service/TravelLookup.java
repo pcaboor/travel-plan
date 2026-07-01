@@ -13,6 +13,6 @@ public interface TravelLookup {
 
     Optional<TravelSnapshot> fetch(UUID travelId, String authorization);
 
-    record TravelSnapshot(LocalDate startDate, BigDecimal price, String currency, String status) {
+    record TravelSnapshot(LocalDate startDate, BigDecimal price, String currency, String status, String managerId) {
     }
 }
