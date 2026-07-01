@@ -27,6 +27,7 @@ import com.travelplan.admin.domain.User;
 import com.travelplan.admin.domain.UserStatus;
 import com.travelplan.admin.repository.BookingRepository;
 import com.travelplan.admin.repository.UserRepository;
+import com.travelplan.admin.service.PaymentLookup;
 import com.travelplan.admin.service.TravelLookup;
 import com.travelplan.admin.service.TravelLookup.TravelSnapshot;
 import com.travelplan.admin.support.JwtTestFactory;
@@ -46,6 +47,9 @@ class SubscriptionControllerIntegrationTest {
 
     @MockBean
     private TravelLookup travelLookup;
+
+    @MockBean
+    private PaymentLookup paymentLookup;
 
     @Value("${travelplan.jwt.secret}")
     private String secret;
@@ -139,6 +143,33 @@ class SubscriptionControllerIntegrationTest {
     @Test
     void unsubscribe_without_an_active_subscription_returns_404() throws Exception {
         mockMvc.perform(post("/api/subscriptions/{id}/unsubscribe", travelId).header("Authorization", travelerAuth))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void confirm_marks_the_booking_confirmed_when_paid() throws Exception {
+        mockMvc.perform(post("/api/subscriptions/{id}", travelId).header("Authorization", travelerAuth))
+                .andExpect(status().isOk());
+        when(paymentLookup.isBookingPaid(any(), any())).thenReturn(true);
+
+        mockMvc.perform(post("/api/subscriptions/{id}/confirm", travelId).header("Authorization", travelerAuth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CONFIRMED"));
+    }
+
+    @Test
+    void confirm_conflicts_when_payment_is_not_completed() throws Exception {
+        mockMvc.perform(post("/api/subscriptions/{id}", travelId).header("Authorization", travelerAuth))
+                .andExpect(status().isOk());
+        when(paymentLookup.isBookingPaid(any(), any())).thenReturn(false);
+
+        mockMvc.perform(post("/api/subscriptions/{id}/confirm", travelId).header("Authorization", travelerAuth))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void confirm_without_a_pending_subscription_returns_404() throws Exception {
+        mockMvc.perform(post("/api/subscriptions/{id}/confirm", travelId).header("Authorization", travelerAuth))
                 .andExpect(status().isNotFound());
     }
 }

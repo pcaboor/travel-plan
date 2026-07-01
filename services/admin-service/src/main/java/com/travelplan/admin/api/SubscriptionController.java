@@ -38,4 +38,10 @@ public class SubscriptionController {
     public SubscriptionResponse unsubscribe(@PathVariable UUID travelId, @AuthenticationPrincipal Jwt jwt) {
         return service.unsubscribe(UUID.fromString(jwt.getSubject()), travelId);
     }
+
+    @PostMapping("/{travelId}/confirm")
+    @PreAuthorize("hasRole('USER')")
+    public SubscriptionResponse confirm(@PathVariable UUID travelId, @AuthenticationPrincipal Jwt jwt) {
+        return service.confirm(UUID.fromString(jwt.getSubject()), travelId, "Bearer " + jwt.getTokenValue());
+    }
 }
