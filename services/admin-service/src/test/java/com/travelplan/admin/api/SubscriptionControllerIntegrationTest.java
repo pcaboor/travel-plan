@@ -28,6 +28,7 @@ import com.travelplan.admin.domain.UserStatus;
 import com.travelplan.admin.repository.BookingRepository;
 import com.travelplan.admin.repository.UserRepository;
 import com.travelplan.admin.service.PaymentLookup;
+import com.travelplan.admin.service.RecommendationSync;
 import com.travelplan.admin.service.TravelLookup;
 import com.travelplan.admin.service.TravelLookup.TravelSnapshot;
 import com.travelplan.admin.support.JwtTestFactory;
@@ -50,6 +51,9 @@ class SubscriptionControllerIntegrationTest {
 
     @MockBean
     private PaymentLookup paymentLookup;
+
+    @MockBean
+    private RecommendationSync recommendationSync;
 
     @Value("${travelplan.jwt.secret}")
     private String secret;

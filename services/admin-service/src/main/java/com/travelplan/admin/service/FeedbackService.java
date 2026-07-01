@@ -29,13 +29,16 @@ public class FeedbackService {
 
     private final FeedbackRepository feedback;
     private final BookingRepository bookings;
+    private final RecommendationSync recommendationSync;
 
-    public FeedbackService(FeedbackRepository feedback, BookingRepository bookings) {
+    public FeedbackService(FeedbackRepository feedback, BookingRepository bookings,
+                           RecommendationSync recommendationSync) {
         this.feedback = feedback;
         this.bookings = bookings;
+        this.recommendationSync = recommendationSync;
     }
 
-    public FeedbackResponse create(UUID authorUserId, FeedbackCreateRequest request) {
+    public FeedbackResponse create(UUID authorUserId, FeedbackCreateRequest request, String authorization) {
         Booking participation = bookings.findByUserIdAndTravelRefId(authorUserId, request.travelId()).stream()
                 .filter(b -> PARTICIPATED.contains(b.getStatus()))
                 .findFirst()
@@ -50,7 +53,9 @@ public class FeedbackService {
         entity.setManagerId(participation.getManagerId());
         entity.setRating(request.rating());
         entity.setComment(request.comment());
-        return FeedbackResponse.from(feedback.save(entity));
+        FeedbackResponse response = FeedbackResponse.from(feedback.save(entity));
+        recommendationSync.recordRating(request.travelId(), request.rating(), authorization);
+        return response;
     }
 
     @Transactional(readOnly = true)
