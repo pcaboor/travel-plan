@@ -139,7 +139,7 @@ Postgres** ; la reco graphe exige de les faire entrer dans Neo4j.
 | V2-5 | **Stats & score manager** | agrégations, leaderboard, dashboards par rôle | V2-2, V2-3, V2-4 | ✅ |
 | V2-6 | **Elasticsearch** | infra + indexation + search/autocomplete | V2-1 | ✅ |
 | V2-7 | **Reco Neo4j** | Traveler dans le graphe + Cypher de suggestion | V2-2, V2-3 | ⏳ |
-| V2-8 | **UI traveler & manager** | pages responsive, branchées sur V2-1→7 | V2-1→7 | ⏳ |
+| V2-8 | **UI traveler & manager** | pages responsive, branchées sur V2-1→7 | V2-1→7 | ✅ (cœur) |
 | V2-9 | **Tests & E2E** | unit/intégration par feature + Playwright + CI | tous | ⏳ |
 
 ## 5. Séquencement conseillé

@@ -2,11 +2,23 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { hasRole, useAuth } from "@/lib/auth";
+import { BookingsPage } from "@/pages/BookingsPage";
+import { DiscoverPage } from "@/pages/DiscoverPage";
+import { LeaderboardPage } from "@/pages/LeaderboardPage";
 import { LoginPage } from "@/pages/LoginPage";
-import { UsersPage } from "@/pages/UsersPage";
+import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
+import { MyStatsPage } from "@/pages/MyStatsPage";
 import { PaymentMethodsPage } from "@/pages/PaymentMethodsPage";
 import { TravelsPage } from "@/pages/TravelsPage";
-import { BookingsPage } from "@/pages/BookingsPage";
+import { UsersPage } from "@/pages/UsersPage";
+
+function HomeRedirect() {
+  const { user } = useAuth();
+  if (hasRole(user, "ADMIN")) return <Navigate to="/users" replace />;
+  if (hasRole(user, "MANAGER")) return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/discover" replace />;
+}
 
 export function App() {
   return (
@@ -18,7 +30,11 @@ export function App() {
           <ProtectedRoute>
             <Layout>
               <Routes>
-                <Route path="/" element={<Navigate to="/users" replace />} />
+                <Route path="/" element={<HomeRedirect />} />
+                <Route path="/discover" element={<DiscoverPage />} />
+                <Route path="/my-stats" element={<MyStatsPage />} />
+                <Route path="/dashboard" element={<ManagerDashboardPage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route
                   path="/users/:userId/payment-methods"
@@ -26,7 +42,7 @@ export function App() {
                 />
                 <Route path="/travels/*" element={<TravelsPage />} />
                 <Route path="/bookings/*" element={<BookingsPage />} />
-                <Route path="*" element={<Navigate to="/users" replace />} />
+                <Route path="*" element={<HomeRedirect />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

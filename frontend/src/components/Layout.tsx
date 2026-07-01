@@ -1,26 +1,34 @@
 import { useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
+  BarChart3,
   Briefcase,
+  Compass,
   CreditCard,
   Globe2,
+  LayoutDashboard,
   LogOut,
   Menu,
   Tickets,
+  Trophy,
   Users,
   X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
+import { hasRole, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: typeof Users };
+type NavItem = { to: string; label: string; icon: typeof Users; roles?: string[] };
 
 const NAV: NavItem[] = [
-  { to: "/users", label: "Users", icon: Users },
-  { to: "/travels", label: "Travels", icon: Globe2 },
-  { to: "/bookings", label: "Bookings", icon: Tickets },
+  { to: "/discover", label: "Discover", icon: Compass },
+  { to: "/my-stats", label: "My stats", icon: BarChart3 },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["MANAGER", "ADMIN"] },
+  { to: "/travels", label: "Travels", icon: Globe2, roles: ["MANAGER", "ADMIN"] },
+  { to: "/bookings", label: "Bookings", icon: Tickets, roles: ["ADMIN", "MANAGER", "VIEWER"] },
+  { to: "/users", label: "Users", icon: Users, roles: ["ADMIN", "MANAGER", "VIEWER"] },
+  { to: "/leaderboard", label: "Leaderboard", icon: Trophy, roles: ["ADMIN"] },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -52,7 +60,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </Button>
         </div>
         <nav className="flex flex-col gap-1 p-4">
-          {NAV.map((item) => {
+          {NAV.filter((item) => !item.roles || hasRole(user, ...item.roles)).map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -118,6 +126,10 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 function pageTitle(pathname: string): string {
+  if (pathname.startsWith("/discover")) return "Discover";
+  if (pathname.startsWith("/my-stats")) return "My stats";
+  if (pathname.startsWith("/dashboard")) return "Dashboard";
+  if (pathname.startsWith("/leaderboard")) return "Leaderboard";
   if (pathname.startsWith("/users")) return "Users";
   if (pathname.startsWith("/travels")) return "Travels";
   if (pathname.startsWith("/bookings")) return "Bookings";
