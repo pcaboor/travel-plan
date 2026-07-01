@@ -40,6 +40,10 @@ Document de référence consulté par Claude pour suivre l'état du projet et le
 | 7 | **Vault dev + Loki/Grafana/promtail + JSON logs** | ✅ Phase 7 terminée |
 | 8 | Bonus K8s + E2E | ⏸ |
 
+> **Phase 1 (8 sous-phases) terminée + audit réussi.** La suite du projet
+> (engagement voyageurs, recommandations, transactions) est cadrée dans
+> [roadmap-v2.md](roadmap-v2.md) — épics V2-1 → V2-9.
+
 ## Décisions d'architecture
 
 ### Répartition des données
