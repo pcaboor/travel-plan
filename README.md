@@ -120,6 +120,7 @@ Default admin credentials are seeded by `auth-service` on first boot — see
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [CI/CD, architecture & tooling overview](docs/ci-cd-architecture.md)
 - [Database schema](docs/database-schema.md)
 - [Security baseline](docs/security.md)
 - [API endpoints](docs/api.md)
