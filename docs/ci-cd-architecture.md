@@ -81,7 +81,8 @@ Docker socket mounted, so Testcontainers and image builds work
 flowchart LR
   checkout[Checkout] --> tests[Unit Tests]
   tests --> sonar[SonarQube Analysis]
-  sonar --> images[Build Docker Images]
+  sonar --> gate[Quality Gate]
+  gate --> images[Build Docker Images]
   images --> junit[Publish JUnit reports]
 ```
 
@@ -90,6 +91,7 @@ flowchart LR
 | **Checkout**             | `checkout scm`                                    | —                                                                |
 | **Unit Tests**           | `mvn -B clean test`                               | Persistent `.m2` cache via `maven_repository` volume             |
 | **SonarQube Analysis**   | `mvn -B verify sonar:sonar`                       | Uses `SONAR_HOST_URL` + `SONAR_TOKEN` (Jenkins credentials)      |
+| **Quality Gate**         | polls `api/ce/task` + `api/qualitygates/project_status` | **Fails the build if the SonarQube Quality Gate is not `OK`.** Polls the API using the analysis `ceTaskId` — no plugin or webhook required |
 | **Build Docker Images**  | `docker compose … build`                          | Builds the full stack from `infra/docker/docker-compose.yml`     |
 
 - **Post**: always publishes JUnit reports (`**/target/surefire-reports/*.xml`).

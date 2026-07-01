@@ -44,6 +44,53 @@ pipeline {
       }
     }
 
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 10, unit: 'MINUTES') {
+          sh '''
+            set -e
+            report="target/sonar/report-task.txt"
+            if [ ! -f "$report" ]; then
+              echo "Quality Gate: $report not found (did the SonarQube analysis run?)"
+              exit 1
+            fi
+            ceTaskId=$(sed -n 's/^ceTaskId=//p' "$report")
+            echo "Quality Gate: waiting for SonarQube task $ceTaskId ..."
+
+            analysisId=""
+            for _ in $(seq 1 60); do
+              task=$(curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${ceTaskId}")
+              status=$(echo "$task" | grep -o '"status":"[A-Z]*"' | head -1 | cut -d'"' -f4)
+              echo "  analysis task status: ${status:-unknown}"
+              case "$status" in
+                SUCCESS)
+                  analysisId=$(echo "$task" | grep -o '"analysisId":"[^"]*"' | head -1 | cut -d'"' -f4)
+                  break ;;
+                FAILED|CANCELED)
+                  echo "Quality Gate: analysis task ${status}"; exit 1 ;;
+                *)
+                  sleep 5 ;;
+              esac
+            done
+
+            if [ -z "$analysisId" ]; then
+              echo "Quality Gate: timed out waiting for the analysis to finish"; exit 1
+            fi
+
+            gate=$(curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysisId}")
+            qg=$(echo "$gate" | grep -o '"status":"[A-Z]*"' | head -1 | cut -d'"' -f4)
+            echo "Quality Gate status: ${qg:-unknown}"
+            if [ "$qg" != "OK" ]; then
+              echo "$gate"
+              echo "Quality Gate FAILED — failing the build."
+              exit 1
+            fi
+            echo "Quality Gate passed."
+          '''
+        }
+      }
+    }
+
     stage('Build Docker Images') {
       steps {
         sh 'docker compose -f infra/docker/docker-compose.yml --env-file .env.example build'
