@@ -1,6 +1,8 @@
 package com.travelplan.travel.api;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,10 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.travelplan.travel.api.dto.TravelCreateRequest;
+import com.travelplan.travel.api.dto.TravelHit;
 import com.travelplan.travel.api.dto.TravelResponse;
 import com.travelplan.travel.api.dto.TravelUpdateRequest;
 import com.travelplan.travel.service.TravelService;
@@ -72,8 +76,26 @@ public class TravelController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('USER')")
+    public List<TravelHit> search(@RequestParam String q) {
+        return service.search(q);
+    }
+
+    @GetMapping("/autocomplete")
+    @PreAuthorize("hasRole('USER')")
+    public List<TravelHit> autocomplete(@RequestParam String q) {
+        return service.autocomplete(q);
+    }
+
+    @PostMapping("/reindex")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Integer> reindex() {
+        return Map.of("indexed", service.reindexAll());
+    }
+
     private static boolean isAdmin(Jwt jwt) {
-        java.util.List<String> roles = jwt.getClaimAsStringList("roles");
+        List<String> roles = jwt.getClaimAsStringList("roles");
         return roles != null && roles.contains("ADMIN");
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.travelplan.travel.api.dto.AccommodationInput;
@@ -17,6 +18,7 @@ import com.travelplan.travel.api.dto.ActivityInput;
 import com.travelplan.travel.api.dto.DestinationInput;
 import com.travelplan.travel.api.dto.TransportationInput;
 import com.travelplan.travel.api.dto.TravelCreateRequest;
+import com.travelplan.travel.api.dto.TravelHit;
 import com.travelplan.travel.api.dto.TravelResponse;
 import com.travelplan.travel.api.dto.TravelUpdateRequest;
 import com.travelplan.travel.domain.Accommodation;
@@ -27,15 +29,19 @@ import com.travelplan.travel.domain.Transportation;
 import com.travelplan.travel.domain.Travel;
 import com.travelplan.travel.domain.TravelStatus;
 import com.travelplan.travel.repository.TravelRepository;
+import com.travelplan.travel.search.TravelDocument;
+import com.travelplan.travel.search.TravelSearch;
 
 @Service
 @Transactional
 public class TravelService {
 
     private final TravelRepository travelRepository;
+    private final TravelSearch travelSearch;
 
-    public TravelService(TravelRepository travelRepository) {
+    public TravelService(TravelRepository travelRepository, TravelSearch travelSearch) {
         this.travelRepository = travelRepository;
+        this.travelSearch = travelSearch;
     }
 
     public TravelResponse create(TravelCreateRequest request, String managerId) {
@@ -51,7 +57,9 @@ public class TravelService {
         OffsetDateTime now = OffsetDateTime.now();
         travel.setCreatedAt(now);
         travel.setUpdatedAt(now);
-        return TravelResponse.from(travelRepository.save(travel));
+        Travel saved = travelRepository.save(travel);
+        travelSearch.index(TravelDocument.from(saved));
+        return TravelResponse.from(saved);
     }
 
     public TravelResponse update(String id, TravelUpdateRequest request, String currentUserId, boolean isAdmin) {
@@ -94,13 +102,16 @@ public class TravelService {
             travel.setTransportations(buildTransportations(request.transportations()));
         }
         travel.setUpdatedAt(OffsetDateTime.now());
-        return TravelResponse.from(travelRepository.save(travel));
+        Travel saved = travelRepository.save(travel);
+        travelSearch.index(TravelDocument.from(saved));
+        return TravelResponse.from(saved);
     }
 
     public void delete(String id, String currentUserId, boolean isAdmin) {
         Travel travel = findOrThrow(id);
         ensureOwnerOrAdmin(travel, currentUserId, isAdmin);
         travelRepository.deleteById(id);
+        travelSearch.delete(id);
     }
 
     /** A manager may only mutate the travels they own; an admin may mutate any. */
@@ -118,6 +129,23 @@ public class TravelService {
     @Transactional(readOnly = true)
     public Page<TravelResponse> list(Pageable pageable) {
         return travelRepository.findAll(pageable).map(TravelResponse::from);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<TravelHit> search(String query) {
+        return travelSearch.search(query);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<TravelHit> autocomplete(String query) {
+        return travelSearch.autocomplete(query);
+    }
+
+    /** Reindex every travel from Neo4j into the search index. */
+    public int reindexAll() {
+        List<Travel> all = travelRepository.findAll();
+        all.forEach(t -> travelSearch.index(TravelDocument.from(t)));
+        return all.size();
     }
 
     private Travel findOrThrow(String id) {
