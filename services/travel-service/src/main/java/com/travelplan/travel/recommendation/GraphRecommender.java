@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class GraphRecommender {
 
+    private static final String TRAVELER_ID = "travelerId";
+
     private final Neo4jClient client;
 
     public GraphRecommender(Neo4jClient client) {
@@ -27,7 +29,7 @@ public class GraphRecommender {
                 MATCH (tr:Travel {id: $travelId})
                 MERGE (t)-[:PARTICIPATED_IN]->(tr)
                 """)
-                .bind(travelerId).to("travelerId")
+                .bind(travelerId).to(TRAVELER_ID)
                 .bind(travelId).to("travelId")
                 .run();
     }
@@ -40,7 +42,7 @@ public class GraphRecommender {
                 MERGE (t)-[r:RATED]->(tr)
                 SET r.score = $score
                 """)
-                .bind(travelerId).to("travelerId")
+                .bind(travelerId).to(TRAVELER_ID)
                 .bind(travelId).to("travelId")
                 .bind(score).to("score")
                 .run();
@@ -70,13 +72,13 @@ public class GraphRecommender {
                 ORDER BY score DESC, rec.title
                 LIMIT 10
                 """)
-                .bind(travelerId).to("travelerId")
+                .bind(travelerId).to(TRAVELER_ID)
                 .fetchAs(RecommendationHit.class)
-                .mappedBy((ts, record) -> new RecommendationHit(
-                        record.get("id").asString(),
-                        record.get("title").asString(null),
-                        record.get("status").asString(null),
-                        record.get("score").asInt()))
+                .mappedBy((ts, row) -> new RecommendationHit(
+                        row.get("id").asString(),
+                        row.get("title").asString(null),
+                        row.get("status").asString(null),
+                        row.get("score").asInt()))
                 .all().stream().toList();
     }
 }

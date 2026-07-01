@@ -20,6 +20,9 @@ import com.travelplan.payment.repository.PaymentTransactionRepository;
 @Transactional
 public class PaymentService {
 
+    private static final String UNSUPPORTED_PROVIDER = "Unsupported provider: ";
+    private static final String INTENT_NOT_FOUND = "Payment intent not found: ";
+
     private final PaymentTransactionRepository repository;
     private final StripeAdapter stripe;
     private final PaypalAdapter paypal;
@@ -37,7 +40,7 @@ public class PaymentService {
         ProviderIntent providerIntent = switch (request.provider()) {
             case STRIPE -> stripe.createIntent(request.amount(), currency, userId, request.bookingRefId());
             case PAYPAL -> paypal.createIntent(request.amount(), currency, userId, request.bookingRefId());
-            default -> throw new IllegalStateException("Unsupported provider: " + request.provider());
+            default -> throw new IllegalStateException(UNSUPPORTED_PROVIDER + request.provider());
         };
 
         PaymentTransaction tx = new PaymentTransaction();
@@ -63,17 +66,17 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public IntentResponse get(UUID id) {
         PaymentTransaction tx = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Payment intent not found: " + id));
+                .orElseThrow(() -> new NotFoundException(INTENT_NOT_FOUND + id));
         return IntentResponse.from(tx, null, null);
     }
 
     public IntentResponse refresh(UUID id) {
         PaymentTransaction tx = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Payment intent not found: " + id));
+                .orElseThrow(() -> new NotFoundException(INTENT_NOT_FOUND + id));
         ProviderIntent providerIntent = switch (tx.getProvider()) {
             case STRIPE -> stripe.retrieve(tx.getProviderIntentId());
             case PAYPAL -> paypal.retrieve(tx.getProviderIntentId());
-            default -> throw new IllegalStateException("Unsupported provider: " + tx.getProvider());
+            default -> throw new IllegalStateException(UNSUPPORTED_PROVIDER + tx.getProvider());
         };
         tx.setStatus(providerIntent.status());
         return IntentResponse.from(tx, providerIntent.clientSecret(), providerIntent.approvalUrl());
@@ -81,11 +84,11 @@ public class PaymentService {
 
     public IntentResponse capture(UUID id) {
         PaymentTransaction tx = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Payment intent not found: " + id));
+                .orElseThrow(() -> new NotFoundException(INTENT_NOT_FOUND + id));
         ProviderIntent providerIntent = switch (tx.getProvider()) {
             case PAYPAL -> paypal.capture(tx.getProviderIntentId());
             case STRIPE -> stripe.retrieve(tx.getProviderIntentId());
-            default -> throw new IllegalStateException("Unsupported provider: " + tx.getProvider());
+            default -> throw new IllegalStateException(UNSUPPORTED_PROVIDER + tx.getProvider());
         };
         tx.setStatus(providerIntent.status());
         return IntentResponse.from(tx, providerIntent.clientSecret(), providerIntent.approvalUrl());
@@ -93,7 +96,7 @@ public class PaymentService {
 
     public IntentResponse cancel(UUID id) {
         PaymentTransaction tx = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Payment intent not found: " + id));
+                .orElseThrow(() -> new NotFoundException(INTENT_NOT_FOUND + id));
         if (tx.getProvider() == PaymentProvider.STRIPE) {
             ProviderIntent providerIntent = stripe.cancel(tx.getProviderIntentId());
             tx.setStatus(providerIntent.status());
