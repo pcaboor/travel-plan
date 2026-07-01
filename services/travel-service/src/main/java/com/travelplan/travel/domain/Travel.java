@@ -51,6 +51,10 @@ public class Travel {
     @Property("status")
     private TravelStatus status = TravelStatus.DRAFT;
 
+    /** User id (JWT subject) of the manager who created this travel. */
+    @Property("managerId")
+    private String managerId;
+
     @Property("createdAt")
     private OffsetDateTime createdAt;
 

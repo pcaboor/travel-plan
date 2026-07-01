@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,12 +73,18 @@ class TravelControllerIntegrationTest {
     private JwtTestFactory jwt;
     private String adminAuth;
     private String viewerAuth;
+    private String managerAId;
+    private String managerAAuth;
+    private String managerBAuth;
 
     @BeforeEach
     void setup() {
         jwt = new JwtTestFactory(secret, issuer);
         adminAuth = jwt.bearer("admin@example.com", List.of("ADMIN"));
         viewerAuth = jwt.bearer("viewer@example.com", List.of("VIEWER"));
+        managerAId = UUID.randomUUID().toString();
+        managerAAuth = jwt.bearer(managerAId, "managerA@example.com", List.of("MANAGER"));
+        managerBAuth = jwt.bearer(UUID.randomUUID().toString(), "managerB@example.com", List.of("MANAGER"));
         travelRepository.deleteAll();
     }
 
@@ -170,12 +177,77 @@ class TravelControllerIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void manager_creating_a_travel_becomes_its_owner() throws Exception {
+        mockMvc.perform(post("/api/travels")
+                        .header("Authorization", managerAAuth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TravelCreateRequest(
+                                "Owned", "desc", null, null, 5, new BigDecimal("100.00"), "EUR",
+                                TravelStatus.DRAFT, null, null, null, null))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.managerId").value(managerAId));
+    }
+
+    @Test
+    void admin_can_create_travel_via_role_hierarchy() throws Exception {
+        // create requires hasRole('MANAGER'); ADMIN must inherit it through the hierarchy
+        mockMvc.perform(post("/api/travels")
+                        .header("Authorization", adminAuth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TravelCreateRequest(
+                                "By admin", null, null, null, 1, null, "EUR",
+                                TravelStatus.DRAFT, null, null, null, null))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void manager_cannot_update_a_travel_they_do_not_own() throws Exception {
+        String id = createTravelAs(managerAAuth);
+        mockMvc.perform(put("/api/travels/" + id)
+                        .header("Authorization", managerBAuth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TravelUpdateRequest(
+                                "Hijacked", null, null, null, null, null, null, null, null, null, null, null))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void manager_can_update_their_own_travel() throws Exception {
+        String id = createTravelAs(managerAAuth);
+        mockMvc.perform(put("/api/travels/" + id)
+                        .header("Authorization", managerAAuth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TravelUpdateRequest(
+                                "Mine", null, null, null, null, null, null, null, null, null, null, null))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Mine"));
+    }
+
+    @Test
+    void manager_cannot_delete_a_travel_they_do_not_own() throws Exception {
+        String id = createTravelAs(managerAAuth);
+        mockMvc.perform(delete("/api/travels/" + id).header("Authorization", managerBAuth))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void admin_can_delete_any_managers_travel() throws Exception {
+        String id = createTravelAs(managerAAuth);
+        mockMvc.perform(delete("/api/travels/" + id).header("Authorization", adminAuth))
+                .andExpect(status().isNoContent());
+    }
+
     private String createSampleTravel() throws Exception {
+        return createTravelAs(adminAuth);
+    }
+
+    private String createTravelAs(String auth) throws Exception {
         TravelCreateRequest request = new TravelCreateRequest(
                 "Sample", "desc", null, null, 5, new BigDecimal("100.00"), "EUR",
                 TravelStatus.DRAFT, null, null, null, null);
         MvcResult result = mockMvc.perform(post("/api/travels")
-                        .header("Authorization", adminAuth)
+                        .header("Authorization", auth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
