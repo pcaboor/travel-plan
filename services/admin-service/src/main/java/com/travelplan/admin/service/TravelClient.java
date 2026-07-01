@@ -35,7 +35,7 @@ class TravelClient implements TravelLookup {
                     .retrieve()
                     .body(TravelDto.class);
             return Optional.ofNullable(dto)
-                    .map(d -> new TravelSnapshot(d.startDate(), d.price(), d.currency(), d.status()));
+                    .map(d -> new TravelSnapshot(d.startDate(), d.price(), d.currency(), d.status(), d.managerId()));
         } catch (RestClientResponseException ex) {
             if (ex.getStatusCode().value() == 404) {
                 return Optional.empty();
@@ -45,6 +45,6 @@ class TravelClient implements TravelLookup {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record TravelDto(LocalDate startDate, BigDecimal price, String currency, String status) {
+    record TravelDto(LocalDate startDate, BigDecimal price, String currency, String status, String managerId) {
     }
 }

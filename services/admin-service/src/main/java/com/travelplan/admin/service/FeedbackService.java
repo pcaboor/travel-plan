@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.travelplan.admin.api.dto.FeedbackCreateRequest;
 import com.travelplan.admin.api.dto.FeedbackResponse;
+import com.travelplan.admin.domain.Booking;
 import com.travelplan.admin.domain.BookingStatus;
 import com.travelplan.admin.domain.Feedback;
 import com.travelplan.admin.repository.BookingRepository;
@@ -35,11 +36,10 @@ public class FeedbackService {
     }
 
     public FeedbackResponse create(UUID authorUserId, FeedbackCreateRequest request) {
-        boolean participated = bookings.findByUserIdAndTravelRefId(authorUserId, request.travelId()).stream()
-                .anyMatch(b -> PARTICIPATED.contains(b.getStatus()));
-        if (!participated) {
-            throw new ConflictException("You can only review a travel you participated in");
-        }
+        Booking participation = bookings.findByUserIdAndTravelRefId(authorUserId, request.travelId()).stream()
+                .filter(b -> PARTICIPATED.contains(b.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new ConflictException("You can only review a travel you participated in"));
         if (feedback.existsByAuthorUserIdAndTravelRefId(authorUserId, request.travelId())) {
             throw new ConflictException("You already reviewed this travel");
         }
@@ -47,6 +47,7 @@ public class FeedbackService {
         Feedback entity = new Feedback();
         entity.setAuthorUserId(authorUserId);
         entity.setTravelRefId(request.travelId());
+        entity.setManagerId(participation.getManagerId());
         entity.setRating(request.rating());
         entity.setComment(request.comment());
         return FeedbackResponse.from(feedback.save(entity));

@@ -63,6 +63,7 @@ public class SubscriptionService {
         booking.setAmount(travel.price() != null ? travel.price() : BigDecimal.ZERO);
         booking.setCurrency(travel.currency() != null ? travel.currency() : "EUR");
         booking.setTravelStartDate(travel.startDate());
+        booking.setManagerId(travel.managerId() != null ? UUID.fromString(travel.managerId()) : null);
         booking.setStatus(BookingStatus.PENDING);
         return SubscriptionResponse.from(bookings.save(booking));
     }

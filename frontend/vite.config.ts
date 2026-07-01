@@ -36,6 +36,10 @@ export default defineConfig({
         target: process.env.VITE_ADMIN_URL ?? "http://localhost:8082",
         changeOrigin: true,
       },
+      "/api/stats": {
+        target: process.env.VITE_ADMIN_URL ?? "http://localhost:8082",
+        changeOrigin: true,
+      },
     },
   },
 });
