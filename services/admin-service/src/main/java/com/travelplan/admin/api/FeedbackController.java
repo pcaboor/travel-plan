@@ -33,7 +33,7 @@ public class FeedbackController {
     @PreAuthorize("hasRole('USER')")
     public FeedbackResponse create(@Valid @RequestBody FeedbackCreateRequest request,
                                    @AuthenticationPrincipal Jwt jwt) {
-        return service.create(UUID.fromString(jwt.getSubject()), request);
+        return service.create(UUID.fromString(jwt.getSubject()), request, "Bearer " + jwt.getTokenValue());
     }
 
     @GetMapping("/travels/{travelId}")
