@@ -27,22 +27,16 @@
       }
     }
 
-    stage('Unit Tests') {
+    stage('Tests & SonarQube') {
       steps {
         script {
           docker.image(env.MAVEN_IMAGE).inside(env.MAVEN_RUN_ARGS) {
-            sh 'mvn -B clean test'
-          }
-        }
-      }
-    }
-
-    stage('SonarQube Analysis') {
-      steps {
-        script {
-          docker.image(env.MAVEN_IMAGE).inside(env.MAVEN_RUN_ARGS) {
+            // Run the test suite ONCE (with the JaCoCo agent via `verify`) and analyse.
+            // Enable Testcontainers reuse so the Neo4j container is started once and
+            // shared across test classes instead of a fresh container per class.
             sh '''
-              mvn -B verify sonar:sonar \
+              echo 'testcontainers.reuse.enable=true' > /root/.testcontainers.properties
+              mvn -B clean verify sonar:sonar \
                 -Dsonar.host.url="${SONAR_HOST_URL}" \
                 -Dsonar.token="${SONAR_TOKEN}"
             '''
