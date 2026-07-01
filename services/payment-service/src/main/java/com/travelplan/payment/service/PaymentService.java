@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.travelplan.payment.api.dto.BookingPaymentStatus;
 import com.travelplan.payment.api.dto.CreateIntentRequest;
 import com.travelplan.payment.api.dto.IntentResponse;
 import com.travelplan.payment.domain.PaymentProvider;
@@ -49,6 +50,13 @@ public class PaymentService {
         repository.save(tx);
 
         return IntentResponse.from(tx, providerIntent.clientSecret(), providerIntent.approvalUrl());
+    }
+
+    @Transactional(readOnly = true)
+    public BookingPaymentStatus statusForBooking(UUID bookingRefId) {
+        boolean paid = repository.findByBookingRefId(bookingRefId).stream()
+                .anyMatch(tx -> tx.getStatus() == PaymentStatus.SUCCEEDED);
+        return new BookingPaymentStatus(bookingRefId, paid);
     }
 
     @Transactional(readOnly = true)

@@ -33,11 +33,14 @@ public class SubscriptionService {
     private final BookingRepository bookings;
     private final UserRepository users;
     private final TravelLookup travelLookup;
+    private final PaymentLookup paymentLookup;
 
-    public SubscriptionService(BookingRepository bookings, UserRepository users, TravelLookup travelLookup) {
+    public SubscriptionService(BookingRepository bookings, UserRepository users,
+                               TravelLookup travelLookup, PaymentLookup paymentLookup) {
         this.bookings = bookings;
         this.users = users;
         this.travelLookup = travelLookup;
+        this.paymentLookup = paymentLookup;
     }
 
     public SubscriptionResponse subscribe(UUID userId, UUID travelId, String authorization) {
@@ -76,6 +79,23 @@ public class SubscriptionService {
                     "Unsubscription closed: must be at least " + CUTOFF_DAYS + " days before departure");
         }
         booking.setStatus(BookingStatus.CANCELLED);
+        return SubscriptionResponse.from(bookings.save(booking));
+    }
+
+    /**
+     * Confirms a subscription once its payment has succeeded (V2-2b). The traveler
+     * pays via payment-service; this transitions the booking PENDING -> CONFIRMED
+     * after checking payment-service reports the booking as paid.
+     */
+    public SubscriptionResponse confirm(UUID userId, UUID travelId, String authorization) {
+        Booking booking = bookings.findByUserIdAndTravelRefId(userId, travelId).stream()
+                .filter(b -> b.getStatus() == BookingStatus.PENDING)
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("No pending subscription for this travel"));
+        if (!paymentLookup.isBookingPaid(booking.getId(), authorization)) {
+            throw new ConflictException("Payment not completed for this subscription");
+        }
+        booking.setStatus(BookingStatus.CONFIRMED);
         return SubscriptionResponse.from(bookings.save(booking));
     }
 }

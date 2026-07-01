@@ -1,5 +1,6 @@
 package com.travelplan.payment.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,4 +15,6 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 
     Optional<PaymentTransaction> findByProviderAndProviderIntentId(PaymentProvider provider,
                                                                    String providerIntentId);
+
+    List<PaymentTransaction> findByBookingRefId(UUID bookingRefId);
 }
