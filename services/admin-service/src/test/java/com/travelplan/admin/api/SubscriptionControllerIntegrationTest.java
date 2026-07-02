@@ -2,6 +2,7 @@ package com.travelplan.admin.api;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -177,5 +178,15 @@ class SubscriptionControllerIntegrationTest {
     void confirm_without_a_pending_subscription_returns_404() throws Exception {
         mockMvc.perform(post("/api/subscriptions/{id}/confirm", travelId).header("Authorization", travelerAuth))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void traveler_lists_their_own_subscriptions() throws Exception {
+        mockMvc.perform(post("/api/subscriptions/{id}", travelId).header("Authorization", travelerAuth))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/subscriptions/me").header("Authorization", travelerAuth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].travelRefId").value(travelId.toString()));
     }
 }

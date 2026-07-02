@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
+        import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,6 +45,11 @@ public class SubscriptionService {
         this.travelLookup = travelLookup;
         this.paymentLookup = paymentLookup;
         this.recommendationSync = recommendationSync;
+    }
+
+    @Transactional(readOnly = true)
+    public List<SubscriptionResponse> listMine(UUID userId) {
+        return bookings.findByUserId(userId).stream().map(SubscriptionResponse::from).toList();
     }
 
     public SubscriptionResponse subscribe(UUID userId, UUID travelId, String authorization) {
