@@ -1,0 +1,36 @@
+# CI overrides for the E2E run: one replica per service and capped JVM/heap
+# sizes so the whole application stack fits on a GitHub Actions runner
+# (~7 GB RAM). Merged on top of docker-compose.yml via `-f`.
+services:
+  elasticsearch:
+    environment:
+      ES_JAVA_OPTS: "-Xms256m -Xmx512m"
+
+  neo4j:
+    environment:
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+
+  auth-service:
+    deploy:
+      replicas: 1
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx384m"
+
+  admin-service:
+    deploy:
+      replicas: 1
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx384m"
+
+  travel-service:
+    deploy:
+      replicas: 1
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx384m"
+
+  payment-service:
+    deploy:
+      replicas: 1
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx384m"

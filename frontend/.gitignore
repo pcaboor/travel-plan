@@ -3,6 +3,13 @@ dist/
 dist-ssr/
 *.local
 
+# test & e2e artefacts
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
 .env
 .env.*.local
 
