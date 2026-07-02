@@ -9,7 +9,9 @@ import { LeaderboardPage } from "@/pages/LeaderboardPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ManagerDashboardPage } from "@/pages/ManagerDashboardPage";
 import { MyStatsPage } from "@/pages/MyStatsPage";
+import { MyTripsPage } from "@/pages/MyTripsPage";
 import { PaymentMethodsPage } from "@/pages/PaymentMethodsPage";
+import { ReportsPage } from "@/pages/ReportsPage";
 import { TravelsPage } from "@/pages/TravelsPage";
 import { UsersPage } from "@/pages/UsersPage";
 
@@ -32,9 +34,11 @@ export function App() {
               <Routes>
                 <Route path="/" element={<HomeRedirect />} />
                 <Route path="/discover" element={<DiscoverPage />} />
+                <Route path="/my-trips" element={<MyTripsPage />} />
                 <Route path="/my-stats" element={<MyStatsPage />} />
                 <Route path="/dashboard" element={<ManagerDashboardPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route
                   path="/users/:userId/payment-methods"

@@ -5,9 +5,11 @@ import {
   Briefcase,
   Compass,
   CreditCard,
+  Flag,
   Globe2,
   LayoutDashboard,
   LogOut,
+  Luggage,
   Menu,
   Tickets,
   Trophy,
@@ -23,12 +25,14 @@ type NavItem = { to: string; label: string; icon: typeof Users; roles?: string[]
 
 const NAV: NavItem[] = [
   { to: "/discover", label: "Discover", icon: Compass },
+  { to: "/my-trips", label: "My trips", icon: Luggage },
   { to: "/my-stats", label: "My stats", icon: BarChart3 },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["MANAGER", "ADMIN"] },
   { to: "/travels", label: "Travels", icon: Globe2, roles: ["MANAGER", "ADMIN"] },
   { to: "/bookings", label: "Bookings", icon: Tickets, roles: ["ADMIN", "MANAGER", "VIEWER"] },
   { to: "/users", label: "Users", icon: Users, roles: ["ADMIN", "MANAGER", "VIEWER"] },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy, roles: ["ADMIN"] },
+  { to: "/reports", label: "Reports", icon: Flag, roles: ["ADMIN"] },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -127,9 +131,11 @@ export function Layout({ children }: { children: ReactNode }) {
 
 function pageTitle(pathname: string): string {
   if (pathname.startsWith("/discover")) return "Discover";
+  if (pathname.startsWith("/my-trips")) return "My trips";
   if (pathname.startsWith("/my-stats")) return "My stats";
   if (pathname.startsWith("/dashboard")) return "Dashboard";
   if (pathname.startsWith("/leaderboard")) return "Leaderboard";
+  if (pathname.startsWith("/reports")) return "Reports";
   if (pathname.startsWith("/users")) return "Users";
   if (pathname.startsWith("/travels")) return "Travels";
   if (pathname.startsWith("/bookings")) return "Bookings";
